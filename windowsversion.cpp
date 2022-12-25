@@ -2,7 +2,7 @@
 #include <vector>
 #include <random>
 #include <chrono>
-#include <windows.h>
+#include <thread>
 #include <map>
 
 void
@@ -25,39 +25,15 @@ void multiplyMatrixSeq(const std::vector<int> &a, const std::vector<int> &b, std
     }
 }
 
-struct Args {
-    Args(const std::vector<int> &firstMatrix, const std::vector<int> &secondMatrix, std::vector<int> &result,
-         size_t blockI, size_t blockJ, size_t matrixSize, size_t blockSize) : firstMatrix(firstMatrix),
-                                                                              secondMatrix(secondMatrix),
-                                                                              result(result), I(blockI), J(blockJ),
-                                                                              n(matrixSize), r(blockSize) {
-    }
-
-    const std::vector<int> &firstMatrix;
-    const std::vector<int> &secondMatrix;
-    std::vector<int> &result;
-    size_t I;
-    size_t J;
-    size_t n;
-    size_t r;
-};
-
-DWORD WINAPI Call(LPVOID args) {
-    Args *castedArgs = (Args *) args;
-    multiplyBlocks(castedArgs->firstMatrix, castedArgs->secondMatrix, castedArgs->result, castedArgs->n, castedArgs->r,
-                   castedArgs->I, castedArgs->J);
-    ExitThread(0);
-}
-
 void multiplyMatrixThread(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &c, int n, int r) {
-    std::vector<HANDLE> threads;
+    std::vector<std::thread> threads;
     for (int I = 0; I < n; I += r) {
         for (int J = 0; J < n; J += r) {
-            threads.emplace_back(CreateThread(NULL, 0, &Call, new Args(a, b, c, I, J, n, r), 0, NULL));
+            threads.emplace_back(multiplyBlocks, std::cref(a), std::cref(b), std::ref(c), n, r, I, J);
         }
     }
-    for (HANDLE &thread: threads) {
-        WaitForSingleObject(thread, INFINITE);
+    for (std::thread &thread: threads) {
+        thread.join();
     }
 }
 
@@ -70,6 +46,16 @@ std::vector<int> generateMatrix(int n) {
     return result;
 }
 
+void multiplyMatrix(const std::vector<int> &a, const std::vector<int> &b, std::vector<int> &c,int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            c[i * n + j] = 0;
+            for (int k = 0; k < n; k++)
+                c[i * n + j] += a[i * n + k] * b[k * n + j];
+        }
+    }
+}
+
 std::map<int, std::pair<double, double>>
 generateTimes(const std::vector<int> &matrixA, const std::vector<int> &matrixB, std::vector<int> &matrixC, int n) {
     std::map<int, std::pair<double, double>> times;
@@ -79,22 +65,41 @@ generateTimes(const std::vector<int> &matrixA, const std::vector<int> &matrixB, 
         auto end = std::chrono::system_clock::now();
         auto durSeq = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
+        auto copy_c = std::vector<int>(matrixC.size());
+        for (int j = 0; j < matrixC.size(); ++j) {
+            copy_c[i] = matrixC[i];
+        }
+        multiplyMatrix(matrixA, matrixB, matrixC, n);
+        auto copy_c1 = std::vector<int>(matrixC.size());
+        for (int j = 0; j < matrixC.size(); ++j) {
+            copy_c1[i] = matrixC[i];
+        }
+
         start = std::chrono::system_clock::now();
         multiplyMatrixThread(matrixA, matrixB, matrixC, n, i);
         end = std::chrono::system_clock::now();
         auto durThread = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
         times[i] = std::pair<double, double>(durSeq, durThread);
+
+
+        for (int j = 0; j < matrixC.size(); ++j) {
+            if(copy_c1[i] != copy_c[i]){
+                std::cout << "ploho";
+            }
+        }
+        std::cout << "yes";
     }
     return times;
 }
 
 int main() {
-    int n = 300;
+    int n = 20;
     std::vector<int> matrixA = generateMatrix(n);
     std::vector<int> matrixB = generateMatrix(n);
     std::vector<int> matrixC(n * n, 0);
     std::map<int, std::pair<double, double>> times = generateTimes(matrixA, matrixB, matrixC, n);
 
+    std::cout << "\n";
     for (int i = 0; i < times.size(); ++i) {
         std::cout << "Size of blocks: " << i + 1 << "; Amount of blocks: " << ceil((1. * n / (i + 1))) * n
                   << "; Duration for sequential: " << times[i + 1].first

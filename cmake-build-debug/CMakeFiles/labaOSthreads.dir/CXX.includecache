@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+D:/bsu/labaOSthreads/windowsversion.cpp
+iostream
+-
+vector
+-
+random
+-
+chrono
+-
+thread
+-
+map
+-
+

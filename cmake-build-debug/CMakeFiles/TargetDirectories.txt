@@ -1,0 +1,3 @@
+D:/bsu/labaOSthreads/cmake-build-debug/CMakeFiles/labaOSthreads.dir
+D:/bsu/labaOSthreads/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/bsu/labaOSthreads/cmake-build-debug/CMakeFiles/rebuild_cache.dir

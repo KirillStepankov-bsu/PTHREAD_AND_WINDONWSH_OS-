@@ -1,0 +1,3 @@
+"C:\Program Files\JetBrains\CLion 2021.2.1\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\labaOSthreads.dir/objects.a
+C:\msys64\mingw64\bin\ar.exe cr CMakeFiles\labaOSthreads.dir/objects.a @CMakeFiles\labaOSthreads.dir\objects1.rsp
+C:\msys64\mingw64\bin\g++.exe -g -Wl,--whole-archive CMakeFiles\labaOSthreads.dir/objects.a -Wl,--no-whole-archive -o labaOSthreads.exe -Wl,--out-implib,liblabaOSthreads.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\labaOSthreads.dir\linklibs.rsp
